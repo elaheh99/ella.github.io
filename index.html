@@ -346,11 +346,12 @@
     <div id="scene-wrap"></div>
 
     <div class="top-actions">
+      <button class="round-btn" id="btn-music" title="Play the piano song" aria-label="Play the piano song">🔇</button>
       <button class="round-btn" id="btn-daynight" title="Toggle day / night" aria-label="Toggle day and night">🌙</button>
       <button class="round-btn" id="btn-reset" title="Reset view" aria-label="Reset view">⟲</button>
     </div>
 
-    <div id="hint">🖱️ Drag to explore · scroll to zoom · click the wooden signs, iMac, photo &amp; notebook</div>
+    <div id="hint">🖱️ Drag to explore · scroll to zoom · click the signs, iMac, photo &amp; notebook · tap the piano 🎹 for music</div>
     <div id="tooltip"></div>
 
     <!-- ============ MY WORK panel ============ -->
@@ -737,14 +738,24 @@
         }
         ctx.fillStyle='#ffc2da'; roundRect(ctx,58,80-16,140,13,5); ctx.fill();
       });
-      const pianoTex = canvasTex(512,96,function(ctx,w,h){
-        ctx.fillStyle='#fffdf8'; ctx.fillRect(0,0,w,h);
-        ctx.fillStyle='#3c3550';
-        const pat=[1,1,0,1,1,1,0];
-        for(let i=0;i<28;i++){
-          ctx.fillStyle='#e8e2f2'; ctx.fillRect(i*18.28,0,1.5,h);
-          if(pat[i%7]){ ctx.fillStyle='#3c3550'; roundRect(ctx, i*18.28+11, 0, 11, 56, 3); ctx.fill(); }
+      const sheetTex = canvasTex(256,320,function(ctx,w,h){
+        ctx.fillStyle='#fffdf5'; ctx.fillRect(0,0,w,h);
+        ctx.fillStyle='#f3eafd'; ctx.fillRect(0,0,w,64);
+        ctx.fillStyle='#8a6bb0'; ctx.font='700 25px Quicksand, sans-serif'; ctx.textAlign='center';
+        ctx.fillText('Für Elise', w/2, 40);
+        ctx.strokeStyle='rgba(90,70,120,.55)'; ctx.lineWidth=1.6;
+        for(let s=0;s<3;s++){
+          const y0 = 92 + s*76;
+          for(let l=0;l<5;l++){ ctx.beginPath(); ctx.moveTo(22,y0+l*7); ctx.lineTo(w-22,y0+l*7); ctx.stroke(); }
         }
+        /* a little wandering melody of note dots, like the song itself */
+        const melody = [0.9,0.75,0.9,0.75,0.9,0.45,0.6,0.7,0.3,0.55,0.4,0.3,0.45,0.2,0.5,0.65,0.8,0.6,0.35,0.5,0.7,0.55,0.3,0.15];
+        ctx.fillStyle='#4a3f66';
+        melody.forEach(function(v,i){
+          const staff = Math.floor(i/8), x = 34 + (i%8)*26, y = 92 + staff*76 + v*26;
+          ctx.beginPath(); ctx.ellipse(x,y,5,3.8,-0.3,0,7); ctx.fill();
+          ctx.fillRect(x+4.4, y-22, 1.6, 22);
+        });
       });
       const floorTex = canvasTex(512,512,function(ctx,w,h){
         ctx.fillStyle='#c07c33'; ctx.fillRect(0,0,w,h);
@@ -769,6 +780,7 @@
       const swayPlants = [];   // {g, phase, speed, amp}
       const signBoards = [];   // {g, phase, baseY}
       let catRoot, catHead, catTail, clockSecHand, frameGroup, frameBase, notebookGroup, pcGlowMat, screenGlowMat;
+      const pianoKeysByName = {}; const pianoKeyList = [];
       const bulbMats = [];
 
       function addPlant(scale, potMat){
@@ -1093,22 +1105,48 @@
         dr.add(B(0.04,0.14,0.04, MAT.dark, 0.42, 1.85, 0.15));
         room.add(dr);
 
-        /* piano keyboard on X-stand */
+        /* piano keyboard on X-stand — individual keys that really press */
         const piano = new THREE.Group(); piano.position.set(3.0, 0, 1.15); piano.rotation.y = -0.55;
         const pkBody = RB(2.5, 0.2, 0.78, 0.05, MAT.dark, 0, 1.5, 0);
         piano.add(pkBody);
-        const keys = mesh(new THREE.PlaneGeometry(2.3, 0.55), new THREE.MeshStandardMaterial({ map:pianoTex, roughness:0.5 }), 0, 1.61, 0.05);
-        keys.rotation.x = -Math.PI/2; piano.add(keys);
+        const KEY_LAYOUT = [
+          'C4','C#4','D4','D#4','E4','F4','F#4','G4','G#4','A4','A#4','B4',
+          'C5','C#5','D5','D#5','E5','F5','F#5','G5','G#5','A5','A#5','B5','C6'
+        ];
+        const whiteKeyMat = std(0xfffdf8, 0.35);
+        const blackKeyMat = std(0x2e2742, 0.4);
+        const litKeyMat = std(0xffb9d6, 0.35);
+        const WHITE_W = 2.14/15;
+        let whiteIdx = 0;
+        KEY_LAYOUT.forEach(function(name){
+          let key;
+          if(name.indexOf('#') < 0){
+            key = RB(WHITE_W*0.92, 0.05, 0.52, 0.012, whiteKeyMat, -1.07 + (whiteIdx + 0.5)*WHITE_W, 1.6, 0.07);
+            whiteIdx++;
+          } else {
+            key = RB(WHITE_W*0.55, 0.07, 0.3, 0.012, blackKeyMat, -1.07 + whiteIdx*WHITE_W, 1.635, -0.055);
+          }
+          key.userData.keyName = name;
+          key.userData.restY = key.position.y;
+          key.userData.baseMat = key.material;
+          key.userData.pressedMat = litKeyMat;
+          key.userData.press = 0;
+          key.userData.lit = false;
+          pianoKeysByName[name] = key;
+          pianoKeyList.push(key);
+          piano.add(key);
+        });
         piano.add(B(2.3, 0.06, 0.1, MAT.pinkDeep, 0, 1.63, -0.3));
         [-0.7, 0.7].forEach(function(x){
           const l1 = CYL(0.03,0.03,1.6, MAT.grey, x, 0.72, 0); l1.rotation.z = 0.6; l1.rotation.x = 0.25;
           const l2 = CYL(0.03,0.03,1.6, MAT.grey, x, 0.72, 0); l2.rotation.z = -0.6; l2.rotation.x = -0.25;
           piano.add(l1, l2);
         });
-        const sheet = mesh(new THREE.PlaneGeometry(0.55, 0.7), std(0xfffdf5, 0.95), 0.2, 1.95, -0.32);
+        const sheet = mesh(new THREE.PlaneGeometry(0.55, 0.7), new THREE.MeshStandardMaterial({ map:sheetTex, roughness:0.95 }), 0.2, 1.95, -0.32);
         sheet.rotation.x = -0.35; sheet.rotation.z = 0.06; piano.add(sheet);
         piano.add(B(0.6, 0.04, 0.06, MAT.dark, 0.2, 1.68, -0.3));
         room.add(piano);
+        registerInteractive(piano, 'piano', null, 'Piano — play Für Elise 🎹');
 
         /* floor lamp */
         const lamp = new THREE.Group(); lamp.position.set(4.7, 0, 3.7);
@@ -1455,6 +1493,109 @@
         if(pcGlowMat) pcGlowMat.emissiveIntensity = lerp(0.9, 0.25, dayK);
       }
 
+      /* ---------- piano song: Für Elise on a music-box synth ----------
+         Browsers block sound before the first interaction, so nothing
+         plays when the page opens — tap the piano (or the 🎵 button
+         up top) to start/stop the song. */
+      let actx = null, masterGain = null, songOn = false, songTimer = null, songStep = 0, nextNoteTime = 0;
+      const SEC_PER_BEAT = 0.6;
+      const NOTE_FREQ = {};
+      (function(){
+        const names = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+        for(let oct=2; oct<=7; oct++) names.forEach(function(n, i){
+          NOTE_FREQ[n+oct] = 440 * Math.pow(2, (((oct+1)*12 + i) - 69)/12);
+        });
+      })();
+      /* Beethoven, Für Elise — the famous opening, public domain.
+         [note, beats] with .5 ≈ an eighth note; it loops. */
+      const SONG = [
+        ['E5',.5],['D#5',.5],['E5',.5],['D#5',.5],['E5',.5],['B4',.5],['D5',.5],['C5',.5],
+        ['A4',1],['REST',.5],['C4',.5],['E4',.5],['A4',.5],
+        ['B4',1],['REST',.5],['E4',.5],['G#4',.5],['B4',.5],
+        ['C5',1],['REST',.5],['E4',.5],
+        ['E5',.5],['D#5',.5],['E5',.5],['D#5',.5],['E5',.5],['B4',.5],['D5',.5],['C5',.5],
+        ['A4',1],['REST',.5],['C4',.5],['E4',.5],['A4',.5],
+        ['B4',1],['REST',.5],['E4',.5],
+        ['C5',.5],['B4',.5],['A4',1.5],['REST',1]
+      ];
+      const musicBtn = document.getElementById('btn-music');
+      function updateMusicBtn(){
+        musicBtn.textContent = songOn ? '🎵' : '🔇';
+        musicBtn.title = songOn ? 'Stop the music' : 'Play the piano song';
+        musicBtn.setAttribute('aria-label', songOn ? 'Stop the music' : 'Play the piano song');
+      }
+      function ensureAudio(){
+        if(actx) return true;
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if(!AC) return false;
+        actx = new AC();
+        masterGain = actx.createGain();
+        masterGain.gain.value = 0.9;
+        masterGain.connect(actx.destination);
+        // a soft echo so the music box feels like it's playing in the room
+        const echo = actx.createDelay(0.6); echo.delayTime.value = 0.17;
+        const fb = actx.createGain(); fb.gain.value = 0.22;
+        const wet = actx.createGain(); wet.gain.value = 0.2;
+        masterGain.connect(echo); echo.connect(fb); fb.connect(echo);
+        echo.connect(wet); wet.connect(actx.destination);
+        return true;
+      }
+      function playNote(name, when, dur){
+        const f = NOTE_FREQ[name];
+        if(!f || !actx) return;
+        const tail = Math.max(0.9, dur*2.2);
+        const osc = actx.createOscillator(); osc.type = 'sine'; osc.frequency.value = f;
+        const harm = actx.createOscillator(); harm.type = 'triangle'; harm.frequency.value = f*2;
+        const g = actx.createGain(), g2 = actx.createGain();
+        g.gain.setValueAtTime(0.0001, when);
+        g.gain.exponentialRampToValueAtTime(0.42, when + 0.012);
+        g.gain.exponentialRampToValueAtTime(0.0001, when + tail);
+        g2.gain.setValueAtTime(0.0001, when);
+        g2.gain.exponentialRampToValueAtTime(0.1, when + 0.008);
+        g2.gain.exponentialRampToValueAtTime(0.0001, when + 0.3);
+        osc.connect(g); harm.connect(g2);
+        g.connect(masterGain); g2.connect(masterGain);
+        osc.start(when); harm.start(when);
+        osc.stop(when + tail + 0.05); harm.stop(when + 0.35);
+        // strike the matching 3D key at the same moment
+        const key = pianoKeysByName[name];
+        if(key){
+          const delay = Math.max(0, (when - actx.currentTime) * 1000);
+          setTimeout(function(){ key.userData.press = 1; }, delay);
+        }
+      }
+      function scheduleSong(){
+        if(!actx) return;
+        while(nextNoteTime < actx.currentTime + 0.35){
+          const step = SONG[songStep % SONG.length];
+          const dur = step[1] * SEC_PER_BEAT;
+          if(step[0] !== 'REST') playNote(step[0], nextNoteTime, dur);
+          nextNoteTime += dur;
+          songStep++;
+        }
+      }
+      function startSong(){
+        if(!ensureAudio()) return;
+        if(actx.state === 'suspended') actx.resume();
+        songOn = true; songStep = 0;
+        nextNoteTime = actx.currentTime + 0.08;
+        scheduleSong();
+        if(songTimer) clearInterval(songTimer);
+        songTimer = setInterval(scheduleSong, 120);
+        updateMusicBtn();
+      }
+      function stopSong(){
+        songOn = false;
+        if(songTimer){ clearInterval(songTimer); songTimer = null; }
+        updateMusicBtn();
+      }
+      function toggleSong(){ if(songOn) stopSong(); else startSong(); }
+      musicBtn.addEventListener('click', toggleSong);
+      // if the browser parked the context (tab switch etc.), wake it on the next tap
+      window.addEventListener('pointerdown', function(){
+        if(actx && actx.state === 'suspended' && songOn) actx.resume();
+      }, { passive:true });
+
       /* ---------- raycast hover / click ---------- */
       const raycaster = new THREE.Raycaster();
       const mouseNDC = new THREE.Vector2(-2,-2);
@@ -1475,7 +1616,11 @@
         if(hits.length){
           let o = hits[0].object;
           while(o && !o.userData.interactive) o = o.userData.hitRoot || o.parent;
-          if(o && o.userData.interactive) openSection(o.userData.interactive.view);
+          if(o && o.userData.interactive){
+            const d = o.userData.interactive;
+            if(d.kind === 'piano') toggleSong();
+            else openSection(d.view);
+          }
         }
       });
       function setHovered(root){
@@ -1521,6 +1666,9 @@
             root.position.z = frameBase.z + 0.12*k;
           } else if(d.kind === 'notebook'){
             root.rotation.z = Math.sin(perfNow*0.02)*0.05*k;
+          } else if(d.kind === 'piano'){
+            const s = 1 + 0.035*k;
+            root.scale.set(s, s, s);
           }
         });
       }
@@ -1704,6 +1852,17 @@
           if(catHead){
             catHead.rotation.y = Math.sin(t*0.45)*0.32;
             catHead.rotation.z = Math.sin(t*0.8)*0.03;
+          }
+        }
+        // piano keys dip (and blush pink) in time with the song
+        for(let i=0;i<pianoKeyList.length;i++){
+          const key = pianoKeyList[i], u = key.userData;
+          if(u.press > 0 || u.lit){
+            u.press = Math.max(0, u.press - dt*2.4);
+            key.position.y = u.restY - Math.pow(u.press, 0.6) * 0.032;
+            const lit = u.press > 0.3;
+            if(lit !== u.lit){ key.material = lit ? u.pressedMat : u.baseMat; u.lit = lit; }
+            if(u.press === 0) key.position.y = u.restY;
           }
         }
         // iMac screen pulse (+ hover glow)
