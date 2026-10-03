@@ -450,49 +450,44 @@
        links and projects — nothing else in the file needs to change.
        ================================================================ */
     const CONFIG = {
-      name: "[YOUR NAME]",
-      tagline: "[Your tagline — e.g. data analytics student turning messy data into clear stories]",
+      name: "Ella",
+      tagline: "[Your tagline — a few warm words that sum you up!]",
       aboutEmoji: "🌸",
-      intro: "[A warm one-paragraph introduction. Who are you, what are you studying, and what gets you excited about data? Two or three friendly sentences work best here.]",
-      background: "[Your background — where your interest in analytics started, what you have done so far, and where you hope it takes you. Keep it personal, not a résumé.]",
+      intro: "Hi, I'm Ella — a master's student in Data Analytics at the University of Niagara Falls, graduating in 2028. [Your words here — a warm line or two about yourself!]",
+      background: "I earned my bachelor's degree in Psychology from York University, and went on to complete Google's UX Design certificates. I'm now studying for my master's in Data Analytics at the University of Niagara Falls, graduating in 2028. [Your story here — what drew you to data analytics, in your own words.]",
       education: [
-        "[University / school name] — [Degree or program], [start year – end year]",
-        "[Another course, certificate, or program — e.g. Google Data Analytics Certificate]",
-        "[Optional third entry — a class, bootcamp, or self-study path]"
+        "Master's in Data Analytics — University of Niagara Falls (graduating 2028)",
+        "Bachelor's degree in Psychology — York University",
+        "Google UX Design Certificates"
       ],
       whatIDo: [
-        "[Turn raw data into clean, trustworthy datasets]",
-        "[Build dashboards and charts people actually enjoy reading]",
-        "[Answer real questions with SQL, Python and statistics]",
-        "[Explain findings simply, without the jargon]"
+        "[Your words here — what do you enjoy working on?]",
+        "[Your words here — how do you like to approach a problem?]",
+        "[Your words here — what are you excited to do next?]"
       ],
-      skills: ["Python", "SQL", "Excel", "Tableau", "Power BI", "Pandas", "[add a skill]", "[add a skill]"],
+      skills: ["[add your skills & tools here as you learn them]"],
       funFacts: [
-        "[A fun fact about you — a hobby, a quirk, a favourite snack]",
-        "[Another one — the more human, the better]",
-        "[And one more for luck]"
+        "[A fun fact about you — coming soon!]",
+        "[Another one — hobbies, quirks, anything you like]"
       ],
 
-      /* Categories must be one of: Analysis · Visualization · SQL · Machine Learning */
+      /* No projects yet — these cards are friendly placeholders.
+         Add a real project: copy one card, fill in title, category
+         (Analysis · Visualization · SQL · Machine Learning), emoji,
+         accent colour, description, tools and a link. */
       projects: [
-        { title: "[Project title]", category: "Analysis", emoji: "📊", accent: "#ff9cc6",
-          description: "[One or two sentences: what question did you answer, what data did you use, and what did you find?]",
-          tools: ["Python", "Pandas"], link: "#" },
-        { title: "[Project title]", category: "Visualization", emoji: "📈", accent: "#8fc6f5",
-          description: "[Describe the dashboard or chart story you built and who it helps.]",
-          tools: ["Tableau", "Excel"], link: "#" },
-        { title: "[Project title]", category: "SQL", emoji: "🗄️", accent: "#bd9bf0",
-          description: "[Describe the database you queried and the insights your SQL uncovered.]",
-          tools: ["SQL", "PostgreSQL"], link: "#" },
-        { title: "[Project title]", category: "Machine Learning", emoji: "🤖", accent: "#8fe3bc",
-          description: "[Describe the model you trained, what it predicts, and how well it did.]",
-          tools: ["Python", "scikit-learn"], link: "#" },
-        { title: "[Project title]", category: "Analysis", emoji: "🧹", accent: "#ffcf87",
-          description: "[Describe a messy dataset you cleaned and the story hiding inside it.]",
-          tools: ["Python", "Excel"], link: "#" },
-        { title: "[Project title]", category: "Visualization", emoji: "🎨", accent: "#ffadd0",
-          description: "[Describe a visual storytelling piece — an infographic, report or interactive chart.]",
-          tools: ["Power BI", "Canva"], link: "#" }
+        { title: "Coming soon", category: "Analysis", emoji: "🔮", accent: "#ff9cc6",
+          description: "My first data analysis project is in the works — this spot is reserved for it. Check back soon!",
+          tools: [], link: "#" },
+        { title: "Coming soon", category: "Visualization", emoji: "🎨", accent: "#8fc6f5",
+          description: "A dashboard or chart story will live here once it's ready to share.",
+          tools: [], link: "#" },
+        { title: "Coming soon", category: "SQL", emoji: "🗄️", accent: "#bd9bf0",
+          description: "Somewhere out there is a database with answers in it. When I find them, they'll be posted right here.",
+          tools: [], link: "#" },
+        { title: "Coming soon", category: "Machine Learning", emoji: "🤖", accent: "#8fe3bc",
+          description: "A machine learning experiment is on my to-do list — watch this space.",
+          tools: [], link: "#" }
       ],
 
       email: "[your.email@example.com]",
@@ -845,6 +840,54 @@
         });
         posterCaption(ctx,w,h,'where the week actually goes 🥧');
       });
+      const posterScatterTex = canvasTex(340,430,function(ctx,w,h){
+        posterFrame(ctx,w,h);
+        posterTitle(ctx,w,'FIND THE PATTERN','#5a8fd6');
+        ctx.strokeStyle='rgba(120,100,140,.25)'; ctx.lineWidth=1.5;
+        for(let i=0;i<4;i++){
+          const x=58+i*70, y=118+i*55;
+          ctx.beginPath(); ctx.moveTo(x,104); ctx.lineTo(x,324); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(44,y); ctx.lineTo(w-34,y); ctx.stroke();
+        }
+        ctx.strokeStyle='#6b5a86'; ctx.lineWidth=3;
+        ctx.beginPath(); ctx.moveTo(44,104); ctx.lineTo(44,324); ctx.lineTo(w-30,324); ctx.stroke();
+        const dots=[
+          [68,296],[86,275],[103,281],[116,248],[134,258],[148,225],
+          [164,238],[181,205],[198,188],[214,196],[230,164],[247,152],
+          [263,133],[281,145],[298,110]
+        ];
+        ctx.strokeStyle='#f58bb5'; ctx.lineWidth=5; ctx.lineCap='round';
+        ctx.beginPath(); ctx.moveTo(64,300); ctx.lineTo(302,112); ctx.stroke();
+        dots.forEach(function(p,i){
+          ctx.fillStyle=i%3===0?'#f9b64d':(i%2?'#7ab3f0':'#8fd6a4');
+          ctx.beginPath(); ctx.arc(p[0],p[1],7,0,7); ctx.fill();
+          ctx.strokeStyle='#fffdf4'; ctx.lineWidth=3; ctx.stroke();
+        });
+        ctx.fillStyle='#7a6d9e'; ctx.font='700 14px Nunito, sans-serif'; ctx.textAlign='center';
+        ctx.fillText('time →', 286, 348); ctx.save(); ctx.translate(22,210); ctx.rotate(-Math.PI/2); ctx.fillText('signal →',0,0); ctx.restore();
+        posterCaption(ctx,w,h,'little clues become a clear story');
+      });
+      const posterHeatTex = canvasTex(340,430,function(ctx,w,h){
+        posterFrame(ctx,w,h);
+        posterTitle(ctx,w,'HEATMAP MOOD','#e0518f');
+        const vals=[
+          [0,1,2,2,3,1,0],[1,2,3,4,4,2,1],[0,2,4,5,3,2,1],
+          [1,3,5,4,2,1,0],[2,4,3,2,1,0,1]
+        ];
+        const cols=['#f4dff0','#cbb7ed','#8fc6f5','#72d1b0','#f6c65b','#ef7fae'];
+        vals.forEach(function(row,r){ row.forEach(function(v,c){
+          ctx.fillStyle=cols[v]; roundRect(ctx,48+c*36,108+r*42,29,34,6); ctx.fill();
+        }); });
+        ctx.fillStyle='#6b5a86'; ctx.font='700 13px Nunito, sans-serif'; ctx.textAlign='center';
+        ['M','T','W','T','F','S','S'].forEach(function(d,i){ ctx.fillText(d,62+i*36,340); });
+        ctx.textAlign='right'; ['focus','ideas','coffee','code','done'].forEach(function(d,i){ ctx.fillText(d,39,131+i*42); });
+        const grad=ctx.createLinearGradient(72,0,268,0);
+        cols.forEach(function(c,i){ grad.addColorStop(i/(cols.length-1),c); });
+        ctx.fillStyle=grad; roundRect(ctx,72,362,196,12,6); ctx.fill();
+        ctx.fillStyle='#8a7a5c'; ctx.font='600 12px Nunito, sans-serif';
+        ctx.textAlign='left'; ctx.fillText('low',72,394); ctx.textAlign='right'; ctx.fillText('high',268,394);
+        posterCaption(ctx,w,h,'a week, translated into colour');
+      });
       const keyboardTex = canvasTex(256,88,function(ctx,w,h){
         ctx.fillStyle='#fdfaff'; ctx.fillRect(0,0,w,h);
         for(let r=0;r<4;r++) for(let c=0;c<13;c++){
@@ -958,10 +1001,11 @@
             swayPlants.push({ g:tuft, phase:i*1.3, speed:0.9, amp:0.06 });
           }
         });
-        // walls (back + right), off-white / lavender tint
-        const wallBack = B(11.6, 7.6, 0.35, std(0xc493f2, 0.95), 0, 3.8, -4.95);
+        // walls (back + right), matching lavender tint
+        const wallMaterial = std(0xc493f2, 0.95);
+        const wallBack = B(11.6, 7.6, 0.35, wallMaterial, 0, 3.8, -4.95);
         wallBack.castShadow = false; room.add(wallBack);
-        const wallRight = B(0.35, 7.6, 9.6, std(0xffc37e, 0.95), 5.95, 3.8, 0);
+        const wallRight = B(0.35, 7.6, 9.6, wallMaterial, 5.95, 3.8, 0);
         wallRight.castShadow = false; room.add(wallRight);
         // skirting
         room.add(B(11.6, 0.28, 0.06, MAT.white, 0, 0.14, -4.75));
@@ -1393,9 +1437,26 @@
           room.add(poster);
         });
 
-        /* drawers */
+        /* two more analytics prints on the back wall */
+        [
+          { tex:posterScatterTex, x:3.65, y:4.15, rot:-0.025 },
+          { tex:posterHeatTex,    x:5.0,  y:4.3,  rot:0.025 }
+        ].forEach(function(p){
+          const poster = new THREE.Group();
+          poster.position.set(p.x, p.y, -4.73);
+          poster.rotation.z = p.rot;
+          poster.add(RB(1.14, 1.44, 0.07, 0.02, MAT.wood, 0, 0, 0));
+          poster.add(mesh(new THREE.PlaneGeometry(1.0, 1.3),
+            new THREE.MeshStandardMaterial({ map:p.tex, roughness:0.85 }), 0, 0, 0.045));
+          [-0.38, 0.38].forEach(function(px){
+            poster.add(SPH(0.032, std(0xd9a441, 0.35, { metalness:0.5 }), px, 0.66, 0.05));
+          });
+          room.add(poster);
+        });
+
+        /* drawers / cube table — pink to match the chair */
         const dr = new THREE.Group(); dr.position.set(4.5, 0, -3.8); dr.rotation.y = Math.PI;
-        dr.add(RB(1.6, 1.75, 1.15, 0.06, MAT.lav, 0, 0.88, 0));
+        dr.add(RB(1.6, 1.75, 1.15, 0.06, MAT.pink, 0, 0.88, 0));
         [0.45, 0.95, 1.45].forEach(function(y){
           dr.add(RB(1.4, 0.4, 0.05, 0.02, MAT.white, 0, y, 0.58));
           dr.add(SPH(0.05, MAT.woodDark, 0, y, 0.63));
@@ -1817,15 +1878,20 @@
         });
       })();
       /* Beethoven, Für Elise — the famous opening, public domain.
-         [note, beats]; it loops. */
+         Each event is [note, beats, dynamic, legato]. Dynamics follow
+         the phrase instead of making every note equally loud; legato
+         values above 1 let adjacent tones overlap like connected piano
+         playing rather than a row of detached music-box strikes. */
       const SONG = [
-        ['E5',.5],['D#5',.5],['E5',.5],['D#5',.5],['E5',.5],['B4',.5],['D5',1],['C5',1],
-        ['C4',.5],['E4',.5],['A4',1.5],['B4',1],
-        ['E4',.5],['G#4',.5],['B4',1.5],['C5',1],
-        ['E4',.5],['E5',.5],['D#5',.5],['E5',.5],['D#5',.5],['E5',.5],['B4',.5],['D5',1],['C5',1],
-        ['C4',.5],['E4',.5],['A4',1.5],['B4',1],
-        ['E4',.5],['C5',.5],['B4',.5],['A4',2],
-        ['REST',1]
+        ['E5',.5,.54,1.18],['D#5',.5,.48,1.16],['E5',.5,.58,1.18],['D#5',.5,.51,1.16],
+        ['E5',.5,.64,1.2], ['B4',.5,.55,1.14],['D5',1,.61,1.1], ['C5',1,.57,1.08],
+        ['C4',.5,.38,1.08],['E4',.5,.44,1.12],['A4',1.5,.64,1.08],['B4',1,.58,1.08],
+        ['E4',.5,.4,1.08], ['G#4',.5,.46,1.12],['B4',1.5,.62,1.08],['C5',1,.66,1.1],
+        ['E4',.5,.4,1.08], ['E5',.5,.56,1.18],['D#5',.5,.49,1.16],['E5',.5,.6,1.18],
+        ['D#5',.5,.52,1.16],['E5',.5,.67,1.2],['B4',.5,.57,1.14],['D5',1,.63,1.1],['C5',1,.59,1.08],
+        ['C4',.5,.37,1.08],['E4',.5,.43,1.12],['A4',1.5,.65,1.1],['B4',1,.58,1.08],
+        ['E4',.5,.4,1.08],['C5',.5,.6,1.14],['B4',.5,.54,1.14],['A4',2,.5,1.05],
+        ['REST',1,.0,1]
       ];
       const musicBtn = document.getElementById('btn-music');
       function updateMusicBtn(){
@@ -1839,47 +1905,68 @@
         if(!AC) return false;
         actx = new AC();
         masterGain = actx.createGain();
-        masterGain.gain.value = 0.9;
-        masterGain.connect(actx.destination);
-        // a soft echo so the music box feels like it's playing in the room
-        const echo = actx.createDelay(0.6); echo.delayTime.value = 0.17;
-        const fb = actx.createGain(); fb.gain.value = 0.22;
-        const wet = actx.createGain(); wet.gain.value = 0.2;
+        masterGain.gain.value = 0.72;
+        // Gentle compression keeps the hand-shaped dynamics expressive
+        // without sharp jumps between the melody and accompaniment.
+        const comp = actx.createDynamicsCompressor();
+        comp.threshold.value = -22; comp.knee.value = 18;
+        comp.ratio.value = 2.4; comp.attack.value = 0.025; comp.release.value = 0.32;
+        masterGain.connect(comp); comp.connect(actx.destination);
+        // A quiet room reflection blends overlapping releases into a
+        // single performance while keeping the melody clear.
+        const echo = actx.createDelay(0.8); echo.delayTime.value = 0.19;
+        const fb = actx.createGain(); fb.gain.value = 0.16;
+        const wet = actx.createGain(); wet.gain.value = 0.13;
         masterGain.connect(echo); echo.connect(fb); fb.connect(echo);
-        echo.connect(wet); wet.connect(actx.destination);
+        echo.connect(wet); wet.connect(comp);
         return true;
       }
-      function playNote(name, when, dur){
+      function playNote(name, when, dur, velocity){
         const f = NOTE_FREQ[name];
         if(!f || !actx) return;
-        const tail = Math.max(0.9, dur*2.2);
+        velocity = Math.max(.2, Math.min(.8, velocity == null ? .55 : velocity));
+        const release = Math.max(.42, Math.min(.72, dur*.58));
+        const heldUntil = when + Math.max(.12, dur - .08);
+        const end = heldUntil + release;
+
+        // A warm three-part piano colour: mellow fundamental, a softer
+        // second partial for definition and a tiny detuned body tone.
         const osc = actx.createOscillator(); osc.type = 'sine'; osc.frequency.value = f;
-        const harm = actx.createOscillator(); harm.type = 'triangle'; harm.frequency.value = f*2;
-        const g = actx.createGain(), g2 = actx.createGain();
+        const body = actx.createOscillator(); body.type = 'triangle'; body.frequency.value = f;
+        body.detune.value = -3.5;
+        const harm = actx.createOscillator(); harm.type = 'sine'; harm.frequency.value = f*2;
+        const g = actx.createGain(), gb = actx.createGain(), gh = actx.createGain();
+        const peak = velocity*.62, sustain = velocity*.28;
         g.gain.setValueAtTime(0.0001, when);
-        g.gain.exponentialRampToValueAtTime(0.42, when + 0.012);
-        g.gain.exponentialRampToValueAtTime(0.0001, when + tail);
-        g2.gain.setValueAtTime(0.0001, when);
-        g2.gain.exponentialRampToValueAtTime(0.1, when + 0.008);
-        g2.gain.exponentialRampToValueAtTime(0.0001, when + 0.3);
-        osc.connect(g); harm.connect(g2);
-        g.connect(masterGain); g2.connect(masterGain);
-        osc.start(when); harm.start(when);
-        osc.stop(when + tail + 0.05); harm.stop(when + 0.35);
-        // strike the matching 3D key at the same moment
+        g.gain.linearRampToValueAtTime(peak, when + .018);
+        g.gain.exponentialRampToValueAtTime(Math.max(.0002,sustain), when + .24);
+        g.gain.setValueAtTime(Math.max(.0002,sustain), heldUntil);
+        g.gain.exponentialRampToValueAtTime(.0001, end);
+        gb.gain.setValueAtTime(.0001, when);
+        gb.gain.linearRampToValueAtTime(velocity*.16, when + .026);
+        gb.gain.exponentialRampToValueAtTime(.0001, end + .08);
+        gh.gain.setValueAtTime(.0001, when);
+        gh.gain.linearRampToValueAtTime(velocity*.105, when + .009);
+        gh.gain.exponentialRampToValueAtTime(.0001, Math.min(end, when + .38));
+        osc.connect(g); body.connect(gb); harm.connect(gh);
+        g.connect(masterGain); gb.connect(masterGain); gh.connect(masterGain);
+        osc.start(when); body.start(when); harm.start(when);
+        osc.stop(end+.04); body.stop(end+.12); harm.stop(Math.min(end+.04,when+.42));
+        // Strike the matching 3D key at the same moment.
         const key = pianoKeysByName[name];
         if(key){
           const delay = Math.max(0, (when - actx.currentTime) * 1000);
-          setTimeout(function(){ key.userData.press = 1; }, delay);
+          setTimeout(function(){ key.userData.press = .7 + velocity*.5; }, delay);
         }
       }
       function scheduleSong(){
         if(!actx) return;
         while(nextNoteTime < actx.currentTime + 0.35){
           const step = SONG[songStep % SONG.length];
-          const dur = step[1] * SEC_PER_BEAT;
-          if(step[0] !== 'REST') playNote(step[0], nextNoteTime, dur);
-          nextNoteTime += dur;
+          const spacing = step[1] * SEC_PER_BEAT;
+          const soundedFor = spacing * (step[3] || 1);
+          if(step[0] !== 'REST') playNote(step[0], nextNoteTime, soundedFor, step[2]);
+          nextNoteTime += spacing;
           songStep++;
         }
       }
@@ -2141,7 +2228,7 @@
           .forEach(function(p){ gridEl.appendChild(projectCard(p)); });
         if(!gridEl.children.length){
           const empty = document.createElement('p');
-          empty.textContent = '[No projects in this category yet — add one in the CONFIG!]';
+          empty.textContent = 'Nothing in this category yet — projects are on their way! ✨';
           empty.style.color = 'var(--ink-soft)';
           gridEl.appendChild(empty);
         }
