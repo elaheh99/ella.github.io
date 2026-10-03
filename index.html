@@ -112,7 +112,7 @@
       #tooltip.show{ opacity:1; }
 
       /* ---------- cat speech bubble ---------- */
-      #meow-bubble{
+      #meow-bubble, #bug-bubble{
         position:fixed; left:-300px; top:-300px; z-index:41; pointer-events:none;
         background:var(--card); color:var(--ink);
         font-family:"Quicksand",sans-serif; font-weight:700; font-size:15px;
@@ -123,13 +123,15 @@
         opacity:0; transition:opacity .18s ease, transform .22s cubic-bezier(.22,1.6,.36,1);
         white-space:nowrap;
       }
-      #meow-bubble.show{ opacity:1; transform:translate(-50%,-160%) scale(1); }
-      #meow-bubble::after{
+      #meow-bubble.show, #bug-bubble.show{ opacity:1; transform:translate(-50%,-160%) scale(1); }
+      #meow-bubble::after, #bug-bubble::after{
         content:''; position:absolute; left:50%; bottom:-7px; width:11px; height:11px;
         background:var(--card);
         border-right:2px solid var(--pink); border-bottom:2px solid var(--pink);
         transform:translateX(-50%) rotate(45deg);
       }
+      #bug-bubble{ border-color:var(--lav); }
+      #bug-bubble::after{ border-right-color:var(--lav); border-bottom-color:var(--lav); }
 
       /* ---------- panels ---------- */
       .panel{
@@ -374,6 +376,7 @@
     <div id="hint">🖱️ Drag to explore · scroll to zoom · click the signs, iMac, photo &amp; notebook · tap the piano 🎹 · say hi to the cat 🐱</div>
     <div id="tooltip"></div>
     <div id="meow-bubble" aria-hidden="true">meow!</div>
+    <div id="bug-bubble" aria-hidden="true">hi!</div>
 
     <!-- ============ MY WORK panel ============ -->
     <section class="panel" id="panel-work" aria-hidden="true">
@@ -892,6 +895,7 @@
       const swayPlants = [];   // {g, phase, speed, amp}
       const signBoards = [];   // {g, phase, baseY}
       let catRoot, catHead, catTail, clockSecHand, frameGroup, frameBase, notebookGroup, pcGlowMat, screenGlowMat;
+      let rugRoot, cornerHinge, bugGroup, bugWaveArm, bugAntL, bugAntR;
       const pianoKeysByName = {}; const pianoKeyList = [];
       const bulbMats = [];
 
@@ -1033,15 +1037,117 @@
         });
         const carpet = new THREE.Group();
         carpet.position.set(-1.2, 0, 0.4); carpet.rotation.y = 0.22;
-        const cBase = RB(2.6, 0.045, 1.9, 0.02, std(0x6f1c28, 1), 0, 0.022, 0);
-        cBase.castShadow = false; carpet.add(cBase);
-        const cTop = mesh(new THREE.PlaneGeometry(2.56, 1.86), new THREE.MeshStandardMaterial({ map:persianTex, roughness:0.95 }), 0, 0.047, 0);
-        cTop.rotation.x = -Math.PI/2; cTop.castShadow = false; carpet.add(cTop);
-        // fringe on the two short ends
+        rugRoot = carpet;
+        /* The rug lies flat; only its front-right corner is loose.
+           The main body is a shape with a triangular bite taken out of
+           that corner, and a matching triangular flap hinges along the
+           diagonal crease so just that one corner can fold back. */
+        const SQ = Math.SQRT1_2; // cos/sin of the crease's 45°
+        // rug shapes live in (x, −z) space: front edge (z=+0.95) is shape y=−hd
+        function rugShape(hw, hd, bite){
+          const sh = new THREE.Shape();
+          sh.moveTo(-hw,-hd); sh.lineTo(hw,-hd); sh.lineTo(hw,hd); sh.lineTo(-hw,hd); sh.closePath();
+          if(bite){
+            const p = new THREE.Path();
+            p.moveTo(0.5,-hd); p.lineTo(hw,-0.15); p.lineTo(hw,-hd); p.closePath();
+            sh.holes.push(p);
+          }
+          return sh;
+        }
+        // base: solid crimson slab with the corner bitten out
+        const cBase = mesh(new THREE.ExtrudeGeometry(rugShape(1.3, 0.95, true), { depth:0.045, bevelEnabled:false }), std(0x6f1c28, 1), 0, 0.02, 0, true, true);
+        cBase.rotation.x = -Math.PI/2;
+        carpet.add(cBase);
+        // patterned top, UV-mapped in rug coordinates so the flap's
+        // pattern continues seamlessly across the crease
+        const topTex = persianTex.clone();
+        topTex.repeat.set(1/2.6, 1/1.9); topTex.offset.set(0.5, 0.5);
+        topTex.needsUpdate = true;
+        const cTop = mesh(new THREE.ShapeGeometry(rugShape(1.28, 0.93, true)), new THREE.MeshStandardMaterial({ map:topTex, roughness:0.95 }), 0, 0.067, 0, false, true);
+        cTop.rotation.x = -Math.PI/2;
+        carpet.add(cTop);
+        // the loose corner flap, hinged along the crease (A–B)
+        const cornerPivot = new THREE.Group();
+        cornerPivot.position.set(0.9, 0.02, 0.55);
+        cornerPivot.rotation.y = Math.PI/4;
+        carpet.add(cornerPivot);
+        cornerHinge = new THREE.Group();
+        cornerPivot.add(cornerHinge);
+        const L = 0.8 * SQ; // half the crease length; the corner sits L out from it
+        const flapShape = new THREE.Shape();
+        flapShape.moveTo(-L, 0); flapShape.lineTo(L, 0); flapShape.lineTo(0, -L); flapShape.closePath();
+        const flapGeo = new THREE.ExtrudeGeometry(flapShape, { depth:0.042, bevelEnabled:false });
+        // re-map the cap UVs from hinge-local coords into rug coords so
+        // the woven pattern lines up with the rest of the carpet
+        (function(){
+          const pos = flapGeo.attributes.position, uv = flapGeo.attributes.uv;
+          for(let i=0;i<pos.count;i++){
+            const px = pos.getX(i), py = pos.getY(i);
+            uv.setXY(i, (0.9 + SQ*px - SQ*py)/2.6 + 0.5, (-0.55 + SQ*px + SQ*py)/1.9 + 0.5);
+          }
+        })();
+        const flap = mesh(flapGeo, [new THREE.MeshStandardMaterial({ map:persianTex, roughness:0.95 }), std(0x5e1620, 1)], 0, 0.003, 0, true, true);
+        flap.rotation.x = -Math.PI/2;
+        cornerHinge.add(flap);
+        // fringe on the two short ends; the strands by the loose corner
+        // ride along with the flap so they flip over with it
         for(let s=-1;s<=1;s+=2) for(let i=0;i<13;i++){
           const fx = -1.14 + i*0.19;
-          carpet.add(B(0.07, 0.014, 0.16, MAT.cream, fx, 0.012, s*(0.95+0.07)));
+          if(s === 1 && fx >= 0.57){
+            const dx = fx - 0.9, dz = 1.02 - 0.55;
+            const strand = B(0.07, 0.014, 0.16, MAT.cream, (dx-dz)*SQ, 0.012, (dx+dz)*SQ);
+            strand.rotation.y = -Math.PI/4;
+            cornerHinge.add(strand);
+          } else {
+            carpet.add(B(0.07, 0.014, 0.16, MAT.cream, fx, 0.032, s*1.02));
+          }
         }
+        /* …and the rug's little tenant: a cockroach who lives underneath.
+           He sits on the floor (not on the hinge), tucked under the loose
+           corner, so folding the corner back reveals him. */
+        bugGroup = new THREE.Group();
+        bugGroup.position.set(1.0, 0, 0.7);
+        bugGroup.rotation.y = 0.8;
+        bugGroup.visible = false;
+        const bugMat = std(0x3a2010, 0.5);
+        const bugDark = std(0x201004, 0.55);
+        const bBody = SPH(0.17, bugMat, 0, 0.08, 0); bBody.scale.set(0.82, 0.45, 1.3); bugGroup.add(bBody);
+        const bHead = SPH(0.085, bugDark, 0, 0.06, 0.22); bHead.scale.set(1.05, 0.75, 0.85); bugGroup.add(bHead);
+        [-0.055, 0.055].forEach(function(x){
+          const eye = SPH(0.018, std(0x120802, 0.3), x, 0.1, 0.27); bugGroup.add(eye);
+          const glint = SPH(0.006, MAT.white, x + (x < 0 ? -0.005 : 0.005), 0.108, 0.285); glint.castShadow = false; bugGroup.add(glint);
+        });
+        function makeAntenna(side){
+          const g = new THREE.Group();
+          g.position.set(side*0.03, 0.08, 0.24);
+          const curve = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(side*0.1, 0.1, 0.16),
+            new THREE.Vector3(side*0.22, 0.07, 0.34),
+            new THREE.Vector3(side*0.3, 0.12, 0.46)
+          ]);
+          g.add(mesh(new THREE.TubeGeometry(curve, 14, 0.008, 5), bugDark, 0, 0, 0, true, false));
+          return g;
+        }
+        bugAntL = makeAntenna(-1); bugAntR = makeAntenna(1);
+        bugGroup.add(bugAntL, bugAntR);
+        // six spindly legs (the front-right one is busy waving instead)
+        [-1, 1].forEach(function(s){
+          [0.13, 0.0, -0.14].forEach(function(lz, i){
+            if(s === 1 && i === 0) return;
+            const leg = CYL(0.011, 0.008, 0.3, bugDark, s*0.17, 0.05, lz);
+            leg.rotation.z = s * 1.15;
+            leg.rotation.x = (i - 1) * 0.25;
+            bugGroup.add(leg);
+          });
+        });
+        bugWaveArm = new THREE.Group();
+        bugWaveArm.position.set(0.12, 0.07, 0.15);
+        bugWaveArm.add(CYL(0.012, 0.009, 0.26, bugDark, 0, 0.12, 0));
+        bugWaveArm.add(SPH(0.02, bugDark, 0, 0.25, 0));
+        bugWaveArm.rotation.z = -0.2;
+        bugGroup.add(bugWaveArm);
+        carpet.add(bugGroup);
         room.add(carpet);
       })();
 
@@ -1469,6 +1575,7 @@
         room.add(catRoot);
       })();
       registerInteractive(catRoot, 'cat', null, 'the studio cat — click to say hi 🐱');
+      if(rugRoot) registerInteractive(rugRoot, 'rug', null, 'the rug — click to peek underneath 🪲');
 
       /* ---------- wooden signpost ---------- */
       const signTargets = [
@@ -1696,7 +1803,10 @@
          up top) to start/stop the song. */
       let actx = null, masterGain = null, songOn = false, songTimer = null, songStep = 0, nextNoteTime = 0;
       let meowK = 0, meowNod = 0;   // cat meow animation progress (0..1) + current head nod
+      let rugK = 0, rugTarget = 0;  // rug corner fold: 0 = flat, 1 = corner folded back
       const meowBubble = document.getElementById('meow-bubble');
+      const bugBubble = document.getElementById('bug-bubble');
+      const bugProj = new THREE.Vector3();
       const meowProj = new THREE.Vector3();
       const SEC_PER_BEAT = 0.6;
       const NOTE_FREQ = {};
@@ -1853,6 +1963,24 @@
       }
       // warm up the clip on any tap, so the cat's first meow is instant
       window.addEventListener('pointerdown', loadMeow, { passive:true });
+
+      /* ---------- the rug's little secret ----------
+         Click the rug and one corner folds back; the cockroach who
+         lives underneath pops out, waves, and says hi. Click again
+         and the corner flops back down (he doesn't mind). */
+      function showBugBubble(){
+        if(rugTarget < 0.5) return;
+        bugBubble.classList.add('show');
+      }
+      function toggleRug(){
+        rugTarget = rugTarget > 0.5 ? 0 : 1;
+        if(bugBubble._t) clearTimeout(bugBubble._t);
+        if(rugTarget > 0.5){
+          bugBubble._t = setTimeout(showBugBubble, 520);
+        } else {
+          bugBubble.classList.remove('show');
+        }
+      }
       // if the browser parked the context (tab switch etc.), wake it on the next tap
       window.addEventListener('pointerdown', function(){
         if(actx && actx.state === 'suspended' && songOn) actx.resume();
@@ -1882,6 +2010,7 @@
           if(o && o.userData.interactive){
             const d = o.userData.interactive;
             if(d.kind === 'cat') playMeow();
+            else if(d.kind === 'rug') toggleRug();
             else if(d.kind === 'piano') toggleSong();
             else openSection(d.view);
           }
@@ -1933,6 +2062,9 @@
           } else if(d.kind === 'cat'){
             // she leans in a little when your cursor is on her
             if(catHead) catHead.rotation.x = 0.15*k + meowNod;
+          } else if(d.kind === 'rug'){
+            // a teasing little peek of the corner while you hover; the full fold is rugK
+            if(cornerHinge) cornerHinge.rotation.x = -(rugK * 1.85 + k * 0.15 * (1 - rugK));
           } else if(d.kind === 'piano'){
             const s = 1 + 0.035*k;
             root.scale.set(s, s, s);
@@ -2130,6 +2262,24 @@
             catRoot.position.y = 0;
           }
         }
+        // rug corner fold + the cockroach underneath: he pops out, waves, wiggles
+        rugK += (rugTarget - rugK) * Math.min(1, dt*3.5);
+        if(REDUCED) rugK = rugTarget;
+        if(bugGroup){
+          bugGroup.visible = rugK > 0.04;
+          if(bugGroup.visible){
+            const pop = Math.min(1, rugK*1.9);
+            bugGroup.scale.set(pop, pop, pop);
+            bugGroup.position.x = 1.0 + rugK*0.16;
+            bugGroup.position.z = 0.7 + rugK*0.16;
+            const waving = rugK > 0.6;
+            if(bugWaveArm) bugWaveArm.rotation.z = waving ? -0.85 + Math.sin(t*9)*0.5 : -0.2;
+            if(bugAntL) bugAntL.rotation.y = Math.sin(t*3.2)*0.14;
+            if(bugAntR) bugAntR.rotation.y = -Math.sin(t*2.8)*0.14;
+            bugGroup.position.y = waving ? Math.abs(Math.sin(t*9))*0.025 : 0;
+            bugGroup.rotation.y = 0.8 + (waving ? Math.sin(t*4.5)*0.08 : 0);
+          }
+        }
         // piano keys dip (and blush pink) in time with the song
         for(let i=0;i<pianoKeyList.length;i++){
           const key = pianoKeyList[i], u = key.userData;
@@ -2182,6 +2332,14 @@
           meowProj.project(camera);
           meowBubble.style.left = ((meowProj.x*0.5 + 0.5) * window.innerWidth) + 'px';
           meowBubble.style.top = ((-meowProj.y*0.5 + 0.5) * window.innerHeight) + 'px';
+        }
+        // …and the "hi!" bubble floating above the cockroach
+        if(bugGroup && bugBubble.classList.contains('show')){
+          bugGroup.getWorldPosition(bugProj);
+          bugProj.y += 0.55;
+          bugProj.project(camera);
+          bugBubble.style.left = ((bugProj.x*0.5 + 0.5) * window.innerWidth) + 'px';
+          bugBubble.style.top = ((-bugProj.y*0.5 + 0.5) * window.innerHeight) + 'px';
         }
 
         updateHover();
